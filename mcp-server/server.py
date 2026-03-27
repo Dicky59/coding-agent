@@ -242,6 +242,72 @@ async def list_tools() -> list[Tool]:
                 "required": ["repo_path"],
             },
         ),
+        Tool(
+            name="analyze_kotlin_bugs",
+            description=(
+                "Analyzes a Kotlin file for bugs: null safety violations, "
+                "force unwraps (!!), unsafe casts, empty catch blocks, "
+                "coroutine misuse, and exception handling issues. "
+                "Returns a list of findings with line numbers."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Absolute path to .kt file"},
+                    "repo_path": {"type": "string", "description": "Repo root for safety validation"},
+                },
+                "required": ["file_path", "repo_path"],
+            },
+        ),
+        Tool(
+            name="analyze_kotlin_security",
+            description=(
+                "Scans a Kotlin/Android file for security issues: "
+                "hardcoded API keys/passwords/secrets, insecure SharedPreferences usage, "
+                "SQL injection risks, logging of sensitive data, "
+                "insecure HTTP usage, and weak crypto patterns."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Absolute path to .kt file"},
+                    "repo_path": {"type": "string", "description": "Repo root for safety validation"},
+                },
+                "required": ["file_path", "repo_path"],
+            },
+        ),
+        Tool(
+            name="analyze_kotlin_performance",
+            description=(
+                "Checks a Kotlin/Android file for performance issues: "
+                "blocking calls on main thread, GlobalScope usage, "
+                "memory leaks in Fragments/Activities, inefficient collection operations."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Absolute path to .kt file"},
+                    "repo_path": {"type": "string", "description": "Repo root for safety validation"},
+                },
+                "required": ["file_path", "repo_path"],
+            },
+        ),
+        Tool(
+            name="analyze_kotlin_patterns",
+            description=(
+                "Reviews a Kotlin/Android file for MVI architecture violations "
+                "and bad Android patterns: state mutations outside reducer, "
+                "business logic in Activity/Fragment, ViewModel anti-patterns."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Absolute path to .kt file"},
+                    "repo_path": {"type": "string", "description": "Repo root for safety validation"},
+                },
+                "required": ["file_path", "repo_path"],
+            },
+        ),
     ]
 
 
@@ -262,6 +328,14 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             return await _analyze_file_symbols(**arguments)
         case "get_repo_summary":
             return await _get_repo_summary(**arguments)
+        case "analyze_kotlin_bugs":
+            return await _analyze_kotlin_bugs(**arguments)
+        case "analyze_kotlin_security":
+            return await _analyze_kotlin_security(**arguments)
+        case "analyze_kotlin_performance":
+            return await _analyze_kotlin_performance(**arguments)
+        case "analyze_kotlin_patterns":
+            return await _analyze_kotlin_patterns(**arguments)
         case _:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
@@ -592,6 +666,122 @@ async def _get_repo_summary(repo_path: str) -> list[TextContent]:
         },
     }
     return [TextContent(type="text", text=json.dumps(summary, indent=2))]
+
+
+async def _analyze_kotlin_bugs(file_path: str, repo_path: str) -> list[TextContent]:
+    if not is_safe_path(repo_path, file_path):
+        return [TextContent(type="text", text="Error: path traversal attempt blocked")]
+    path = Path(file_path)
+    if not path.exists():
+        return [TextContent(type="text", text=f"Error: file not found: {file_path}")]
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as e:
+        return [TextContent(type="text", text=f"Error reading file: {e}")]
+    lines = content.splitlines()
+    findings: list[dict] = []
+    checks = [
+        (r"!!", "Force unwrap operator (!!)", "Force unwrap can cause NullPointerException at runtime", "Use safe call (?.), elvis operator (?:), or requireNotNull() with a message", "high"),
+        (r"as\s+\w+(?<!\?)", "Unsafe cast (as)", "Unsafe cast will throw ClassCastException if type doesn't match", "Use safe cast 'as?' and handle the null case", "high"),
+        (r"catch\s*\([^)]+\)\s*\{\s*\}", "Empty catch block", "Swallowing exceptions silently hides errors", "At minimum log the exception, or rethrow if unrecoverable", "medium"),
+        (r"GlobalScope\.(launch|async|actor)", "GlobalScope coroutine usage", "GlobalScope coroutines are not tied to any lifecycle and can cause memory leaks", "Use viewModelScope, lifecycleScope, or a custom CoroutineScope", "high"),
+        (r"runBlocking\s*\{", "runBlocking usage", "runBlocking blocks the current thread. On main thread this causes ANR", "Use suspend functions or launch/async instead", "high"),
+        (r"\.printStackTrace\(\)", "printStackTrace() usage", "printStackTrace() outputs to stderr only, lost in production", "Use proper logging framework (Timber)", "low"),
+        (r"throw\s+Exception\(", "Throwing generic Exception", "Throwing base Exception loses semantic meaning", "Use specific exception class or IllegalStateException", "low"),
+    ]
+    for i, line in enumerate(lines):
+        if line.strip().startswith("//"):
+            continue
+        for pattern, title, description, fix, severity in checks:
+            if re.search(pattern, line):
+                findings.append({"line": i + 1, "code": line.strip(), "title": title, "description": description, "suggested_fix": fix, "severity": severity, "category": "bug"})
+    return [TextContent(type="text", text=json.dumps({"file": file_path, "language": "kotlin", "total_findings": len(findings), "findings": findings}, indent=2))]
+
+
+async def _analyze_kotlin_security(file_path: str, repo_path: str) -> list[TextContent]:
+    if not is_safe_path(repo_path, file_path):
+        return [TextContent(type="text", text="Error: path traversal attempt blocked")]
+    path = Path(file_path)
+    if not path.exists():
+        return [TextContent(type="text", text=f"Error: file not found: {file_path}")]
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as e:
+        return [TextContent(type="text", text=f"Error reading file: {e}")]
+    lines = content.splitlines()
+    findings: list[dict] = []
+    checks = [
+        (r'(api_key|apikey|password|secret|token)\s*=\s*"[^"]{4,}"', "Hardcoded secret / credential", "Hardcoded credentials are a critical security risk", "Use BuildConfig fields from local.properties or Android Keystore", "critical"),
+        (r'http://(?!localhost|127\.0\.0\.1)', "Insecure HTTP connection", "Plain HTTP traffic can be intercepted", "Use HTTPS everywhere", "high"),
+        (r'Log\.[dviwe]\s*\([^,]+,\s*[^)]*(?:password|token|secret|key)[^)]*\)', "Logging sensitive data", "Sensitive data in logs can be leaked", "Remove logging of sensitive fields in production", "high"),
+        (r'MODE_WORLD_READABLE|MODE_WORLD_WRITEABLE', "World-readable file mode", "Files accessible by all apps — serious vulnerability", "Use MODE_PRIVATE", "critical"),
+        (r'MD5|SHA1(?![\d])', "Weak cryptographic hash", "MD5 and SHA-1 are cryptographically broken", "Use SHA-256 or stronger", "high"),
+        (r'Random\(\)', "Non-cryptographic Random", "java.util.Random is not cryptographically secure", "Use SecureRandom() for security-sensitive operations", "medium"),
+        (r'rawQuery\s*\([^)]*\+', "Potential SQL injection", "String concatenation in SQL queries risks injection", "Use parameterized queries with ? placeholders", "high"),
+    ]
+    for i, line in enumerate(lines):
+        if line.strip().startswith("//"):
+            continue
+        for pattern, title, description, fix, severity in checks:
+            if re.search(pattern, line, re.IGNORECASE):
+                findings.append({"line": i + 1, "code": line.strip(), "title": title, "description": description, "suggested_fix": fix, "severity": severity, "category": "security"})
+    return [TextContent(type="text", text=json.dumps({"file": file_path, "language": "kotlin", "total_findings": len(findings), "findings": findings}, indent=2))]
+
+
+async def _analyze_kotlin_performance(file_path: str, repo_path: str) -> list[TextContent]:
+    if not is_safe_path(repo_path, file_path):
+        return [TextContent(type="text", text="Error: path traversal attempt blocked")]
+    path = Path(file_path)
+    if not path.exists():
+        return [TextContent(type="text", text=f"Error: file not found: {file_path}")]
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as e:
+        return [TextContent(type="text", text=f"Error reading file: {e}")]
+    lines = content.splitlines()
+    findings: list[dict] = []
+    checks = [
+        (r'companion object\s*\{[^}]*(?:Activity|Fragment|Context|View)', "Static reference to Android component", "Static references to Activity/Fragment cause memory leaks", "Use WeakReference<> or remove the static reference", "high"),
+        (r'GlobalScope\.(launch|async)', "GlobalScope usage", "GlobalScope coroutines are not tied to lifecycle", "Use viewModelScope or lifecycleScope", "high"),
+        (r'Thread\.sleep\(', "Thread.sleep() usage", "Thread.sleep() blocks the thread — causes ANR on main thread", "Use delay() in a coroutine instead", "high"),
+        (r'findViewById', "findViewById usage", "Repeated findViewById calls are slow and error-prone", "Use ViewBinding instead", "low"),
+        (r'BitmapFactory\.decode(?!.*inSampleSize)', "Bitmap decoding without sample size", "Decoding full-size bitmaps can cause OutOfMemoryError", "Use BitmapFactory.Options with inSampleSize, or use Coil/Glide", "high"),
+        (r'while\s*\(true\)', "Infinite loop", "Infinite loop without clear exit condition can freeze the app", "Ensure there is a clear break condition", "medium"),
+    ]
+    for i, line in enumerate(lines):
+        if line.strip().startswith("//"):
+            continue
+        for pattern, title, description, fix, severity in checks:
+            if re.search(pattern, line):
+                findings.append({"line": i + 1, "code": line.strip(), "title": title, "description": description, "suggested_fix": fix, "severity": severity, "category": "performance"})
+    return [TextContent(type="text", text=json.dumps({"file": file_path, "language": "kotlin", "total_findings": len(findings), "findings": findings}, indent=2))]
+
+
+async def _analyze_kotlin_patterns(file_path: str, repo_path: str) -> list[TextContent]:
+    if not is_safe_path(repo_path, file_path):
+        return [TextContent(type="text", text="Error: path traversal attempt blocked")]
+    path = Path(file_path)
+    if not path.exists():
+        return [TextContent(type="text", text=f"Error: file not found: {file_path}")]
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as e:
+        return [TextContent(type="text", text=f"Error reading file: {e}")]
+    lines = content.splitlines()
+    findings: list[dict] = []
+    checks = [
+        (r'MutableStateFlow|MutableLiveData|MutableSharedFlow', "Mutable state exposed publicly", "MVI: Mutable state should be private, expose only immutable version", "private val _state = MutableStateFlow(...); val state = _state.asStateFlow()", "medium"),
+        (r'GlobalScope\.(launch|async)', "GlobalScope in ViewModel", "Use viewModelScope instead of GlobalScope in ViewModel", "Replace with viewModelScope.launch { }", "high"),
+        (r'viewModelScope\.launch\s*\{(?![^}]*Dispatchers)', "viewModelScope without explicit dispatcher", "IO operations need Dispatchers.IO explicitly specified", "Use viewModelScope.launch(Dispatchers.IO) { } for IO", "medium"),
+        (r'(?:Activity|Fragment).*implements.*(?:Listener|Callback)', "Activity/Fragment implementing listener", "MVI: UI components should not implement listener interfaces", "Use ViewModel to handle events, observe results in Fragment", "medium"),
+    ]
+    for i, line in enumerate(lines):
+        if line.strip().startswith("//"):
+            continue
+        for pattern, title, description, fix, severity in checks:
+            if re.search(pattern, line):
+                findings.append({"line": i + 1, "code": line.strip(), "title": title, "description": description, "suggested_fix": fix, "severity": severity, "category": "pattern"})
+    return [TextContent(type="text", text=json.dumps({"file": file_path, "language": "kotlin", "total_findings": len(findings), "findings": findings}, indent=2))]
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────

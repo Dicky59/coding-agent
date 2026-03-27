@@ -1,0 +1,120 @@
+{
+  "repo_path": "C:/Users/dicky/projects/DailyPulse",
+  "total_files_scanned": 33,
+  "total_findings": 12,
+  "critical": 0,
+  "high": 5,
+  "medium": 7,
+  "low": 0,
+  "findings": [
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\androidTest\\java\\com\\dicky59\\dailypulse\\ExampleInstrumentedTest.kt",
+      "line": 12,
+      "severity": "high",
+      "category": "security",
+      "title": "Insecure HTTP connection",
+      "description": "Plain HTTP traffic can be intercepted",
+      "suggested_fix": "Use HTTPS everywhere"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\ai\\data\\AiRepository.kt",
+      "line": 18,
+      "severity": "high",
+      "category": "bug",
+      "title": "Unsafe cast (as)",
+      "description": "Unsafe cast will throw ClassCastException if type doesn't match",
+      "suggested_fix": "Use safe cast 'as?' and handle the null case"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\ai\\data\\AiRepository.kt",
+      "line": 39,
+      "severity": "high",
+      "category": "bug",
+      "title": "Unsafe cast (as)",
+      "description": "Unsafe cast will throw ClassCastException if type doesn't match",
+      "suggested_fix": "Use safe cast 'as?' and handle the null case"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\ai\\data\\AiRepository.kt",
+      "line": 61,
+      "severity": "high",
+      "category": "bug",
+      "title": "Force unwrap operator (!!)",
+      "description": "Force unwrap can cause NullPointerException at runtime",
+      "suggested_fix": "Use safe call (?.), elvis operator (?:), or requireNotNull() with a message"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\test\\java\\com\\dicky59\\dailypulse\\ExampleUnitTest.kt",
+      "line": 9,
+      "severity": "high",
+      "category": "security",
+      "title": "Insecure HTTP connection",
+      "description": "Plain HTTP traffic can be intercepted",
+      "suggested_fix": "Use HTTPS everywhere"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\articles\\presentation\\ArticleViewModel.kt",
+      "line": 8,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "Mutable state exposed publicly",
+      "description": "MVI: Mutable state should be private, expose only immutable version",
+      "suggested_fix": "private val _state = MutableStateFlow(...); val state = _state.asStateFlow()"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\articles\\presentation\\ArticleViewModel.kt",
+      "line": 22,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "Mutable state exposed publicly",
+      "description": "MVI: Mutable state should be private, expose only immutable version",
+      "suggested_fix": "private val _state = MutableStateFlow(...); val state = _state.asStateFlow()"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\articles\\presentation\\ArticleViewModel.kt",
+      "line": 30,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "viewModelScope without explicit dispatcher",
+      "description": "IO operations need Dispatchers.IO explicitly specified",
+      "suggested_fix": "Use viewModelScope.launch(Dispatchers.IO) { } for IO"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\articles\\presentation\\ArticleViewModel.kt",
+      "line": 49,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "viewModelScope without explicit dispatcher",
+      "description": "IO operations need Dispatchers.IO explicitly specified",
+      "suggested_fix": "Use viewModelScope.launch(Dispatchers.IO) { } for IO"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\sources\\presentation\\SourceViewModel.kt",
+      "line": 7,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "Mutable state exposed publicly",
+      "description": "MVI: Mutable state should be private, expose only immutable version",
+      "suggested_fix": "private val _state = MutableStateFlow(...); val state = _state.asStateFlow()"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\sources\\presentation\\SourceViewModel.kt",
+      "line": 20,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "Mutable state exposed publicly",
+      "description": "MVI: Mutable state should be private, expose only immutable version",
+      "suggested_fix": "private val _state = MutableStateFlow(...); val state = _state.asStateFlow()"
+    },
+    {
+      "file": "C:\\Users\\dicky\\projects\\DailyPulse\\app\\src\\main\\java\\com\\dicky59\\dailypulse\\sources\\presentation\\SourceViewModel.kt",
+      "line": 28,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "viewModelScope without explicit dispatcher",
+      "description": "IO operations need Dispatchers.IO explicitly specified",
+      "suggested_fix": "Use viewModelScope.launch(Dispatchers.IO) { } for IO"
+    }
+  ],
+  "ai_summary": "AI summary unavailable: Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'}, 'request_id': 'req_011CZUEF6Zfok6fkwnMr79Ez'}"
+}
