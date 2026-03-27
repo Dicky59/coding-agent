@@ -1,0 +1,32 @@
+# coding-agent/.cursorrules
+
+## Project
+
+This is an AI Coding Agent built with LangGraph, MCP, and FastAPI.
+Target languages: Kotlin, Java, TypeScript, React, Android.
+
+## Python style
+
+- Always use type hints (Pydantic models for all API contracts)
+- Prefer async/await throughout
+- Use match/case for tool routing in MCP server
+- FastAPI dependency injection over global state
+
+## Architecture
+
+- mcp-server/server.py: MCP tools (never import agent code here)
+- agent/agent.py: LangGraph graph definition
+- agent/api.py: FastAPI HTTP layer only, no business logic
+- frontend/src/: React TypeScript
+
+## LangGraph patterns
+
+- AgentState is a TypedDict with Annotated fields
+- All nodes are pure functions: (state) -> partial state update
+- Tools come from MCP via langchain-mcp-adapters
+
+## Never
+
+- No synchronous file I/O in async functions
+- No hardcoded API keys
+- No business logic in api.py
