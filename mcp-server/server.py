@@ -682,19 +682,51 @@ async def _analyze_kotlin_bugs(file_path: str, repo_path: str) -> list[TextConte
     findings: list[dict] = []
     checks = [
         (r"!!", "Force unwrap operator (!!)", "Force unwrap can cause NullPointerException at runtime", "Use safe call (?.), elvis operator (?:), or requireNotNull() with a message", "high"),
-        (r"as\s+\w+(?<!\?)", "Unsafe cast (as)", "Unsafe cast will throw ClassCastException if type doesn't match", "Use safe cast 'as?' and handle the null case", "high"),
+        (r"(?<!['\"])(?<!\w)\bas\s+\w+(?<!\?)(?!['\"])", "Unsafe cast (as)", "Unsafe cast will throw ClassCastException if type doesn't match", "Use safe cast 'as?' and handle the null case", "high",),
         (r"catch\s*\([^)]+\)\s*\{\s*\}", "Empty catch block", "Swallowing exceptions silently hides errors", "At minimum log the exception, or rethrow if unrecoverable", "medium"),
         (r"GlobalScope\.(launch|async|actor)", "GlobalScope coroutine usage", "GlobalScope coroutines are not tied to any lifecycle and can cause memory leaks", "Use viewModelScope, lifecycleScope, or a custom CoroutineScope", "high"),
         (r"runBlocking\s*\{", "runBlocking usage", "runBlocking blocks the current thread. On main thread this causes ANR", "Use suspend functions or launch/async instead", "high"),
         (r"\.printStackTrace\(\)", "printStackTrace() usage", "printStackTrace() outputs to stderr only, lost in production", "Use proper logging framework (Timber)", "low"),
         (r"throw\s+Exception\(", "Throwing generic Exception", "Throwing base Exception loses semantic meaning", "Use specific exception class or IllegalStateException", "low"),
     ]
+    # Track if we're inside a multiline string
+    in_multiline_string = False
+
     for i, line in enumerate(lines):
-        if line.strip().startswith("//"):
+        stripped = line.strip()
+
+        # Track multiline string boundaries
+        triple_quote_count = line.count('"""')
+        if triple_quote_count % 2 != 0:
+            in_multiline_string = not in_multiline_string
             continue
+        if in_multiline_string:
+            continue
+
+        # Skip single-line comments
+        if stripped.startswith("//"):
+            continue
+        # Skip KDoc/javadoc lines
+        if stripped.startswith("*"):
+            continue
+
         for pattern, title, description, fix, severity in checks:
             if re.search(pattern, line):
-                findings.append({"line": i + 1, "code": line.strip(), "title": title, "description": description, "suggested_fix": fix, "severity": severity, "category": "bug"})
+                # Extra check for 'as' — remove string literals first
+                if "Unsafe cast" in title:
+                    cleaned = re.sub(r'"[^"]*"', '""', line)
+                    cleaned = re.sub(r"'[^']*'", "''", cleaned)
+                    if not re.search(pattern, cleaned):
+                        continue
+                findings.append({
+                    "line": i + 1,
+                    "code": line.strip(),
+                    "title": title,
+                    "description": description,
+                    "suggested_fix": fix,
+                    "severity": severity,
+                    "category": "bug",
+                })
     return [TextContent(type="text", text=json.dumps({"file": file_path, "language": "kotlin", "total_findings": len(findings), "findings": findings}, indent=2))]
 
 
@@ -719,12 +751,44 @@ async def _analyze_kotlin_security(file_path: str, repo_path: str) -> list[TextC
         (r'Random\(\)', "Non-cryptographic Random", "java.util.Random is not cryptographically secure", "Use SecureRandom() for security-sensitive operations", "medium"),
         (r'rawQuery\s*\([^)]*\+', "Potential SQL injection", "String concatenation in SQL queries risks injection", "Use parameterized queries with ? placeholders", "high"),
     ]
+    # Track if we're inside a multiline string
+    in_multiline_string = False
+
     for i, line in enumerate(lines):
-        if line.strip().startswith("//"):
+        stripped = line.strip()
+
+        # Track multiline string boundaries
+        triple_quote_count = line.count('"""')
+        if triple_quote_count % 2 != 0:
+            in_multiline_string = not in_multiline_string
             continue
+        if in_multiline_string:
+            continue
+
+        # Skip single-line comments
+        if stripped.startswith("//"):
+            continue
+        # Skip KDoc/javadoc lines
+        if stripped.startswith("*"):
+            continue
+
         for pattern, title, description, fix, severity in checks:
-            if re.search(pattern, line, re.IGNORECASE):
-                findings.append({"line": i + 1, "code": line.strip(), "title": title, "description": description, "suggested_fix": fix, "severity": severity, "category": "security"})
+            if re.search(pattern, line):
+                # Extra check for 'as' — remove string literals first
+                if "Unsafe cast" in title:
+                    cleaned = re.sub(r'"[^"]*"', '""', line)
+                    cleaned = re.sub(r"'[^']*'", "''", cleaned)
+                    if not re.search(pattern, cleaned):
+                        continue
+                findings.append({
+                    "line": i + 1,
+                    "code": line.strip(),
+                    "title": title,
+                    "description": description,
+                    "suggested_fix": fix,
+                    "severity": severity,
+                    "category": "bug",
+                })
     return [TextContent(type="text", text=json.dumps({"file": file_path, "language": "kotlin", "total_findings": len(findings), "findings": findings}, indent=2))]
 
 
@@ -748,12 +812,44 @@ async def _analyze_kotlin_performance(file_path: str, repo_path: str) -> list[Te
         (r'BitmapFactory\.decode(?!.*inSampleSize)', "Bitmap decoding without sample size", "Decoding full-size bitmaps can cause OutOfMemoryError", "Use BitmapFactory.Options with inSampleSize, or use Coil/Glide", "high"),
         (r'while\s*\(true\)', "Infinite loop", "Infinite loop without clear exit condition can freeze the app", "Ensure there is a clear break condition", "medium"),
     ]
+    # Track if we're inside a multiline string
+    in_multiline_string = False
+
     for i, line in enumerate(lines):
-        if line.strip().startswith("//"):
+        stripped = line.strip()
+
+        # Track multiline string boundaries
+        triple_quote_count = line.count('"""')
+        if triple_quote_count % 2 != 0:
+            in_multiline_string = not in_multiline_string
             continue
+        if in_multiline_string:
+            continue
+
+        # Skip single-line comments
+        if stripped.startswith("//"):
+            continue
+        # Skip KDoc/javadoc lines
+        if stripped.startswith("*"):
+            continue
+
         for pattern, title, description, fix, severity in checks:
             if re.search(pattern, line):
-                findings.append({"line": i + 1, "code": line.strip(), "title": title, "description": description, "suggested_fix": fix, "severity": severity, "category": "performance"})
+                # Extra check for 'as' — remove string literals first
+                if "Unsafe cast" in title:
+                    cleaned = re.sub(r'"[^"]*"', '""', line)
+                    cleaned = re.sub(r"'[^']*'", "''", cleaned)
+                    if not re.search(pattern, cleaned):
+                        continue
+                findings.append({
+                    "line": i + 1,
+                    "code": line.strip(),
+                    "title": title,
+                    "description": description,
+                    "suggested_fix": fix,
+                    "severity": severity,
+                    "category": "bug",
+                })
     return [TextContent(type="text", text=json.dumps({"file": file_path, "language": "kotlin", "total_findings": len(findings), "findings": findings}, indent=2))]
 
 
@@ -770,7 +866,7 @@ async def _analyze_kotlin_patterns(file_path: str, repo_path: str) -> list[TextC
     lines = content.splitlines()
     findings: list[dict] = []
     checks = [
-        (r'MutableStateFlow|MutableLiveData|MutableSharedFlow', "Mutable state exposed publicly", "MVI: Mutable state should be private, expose only immutable version", "private val _state = MutableStateFlow(...); val state = _state.asStateFlow()", "medium"),
+        (r'^\s*(?:val|var)\s+(?!_)\w+\s*=\s*Mutable(?:StateFlow|LiveData|SharedFlow)', "Mutable state exposed publicly", "MVI: Mutable state should be private, expose only immutable version", "private val _state = MutableStateFlow(...); val state = _state.asStateFlow()", "medium",),
         (r'GlobalScope\.(launch|async)', "GlobalScope in ViewModel", "Use viewModelScope instead of GlobalScope in ViewModel", "Replace with viewModelScope.launch { }", "high"),
         (r'viewModelScope\.launch\s*\{(?![^}]*Dispatchers)', "viewModelScope without explicit dispatcher", "IO operations need Dispatchers.IO explicitly specified", "Use viewModelScope.launch(Dispatchers.IO) { } for IO", "medium"),
         (r'(?:Activity|Fragment).*implements.*(?:Listener|Callback)', "Activity/Fragment implementing listener", "MVI: UI components should not implement listener interfaces", "Use ViewModel to handle events, observe results in Fragment", "medium"),
