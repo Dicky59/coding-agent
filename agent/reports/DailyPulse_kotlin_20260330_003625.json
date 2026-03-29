@@ -1,0 +1,13 @@
+{
+  "repo_path": "C:/Users/dicky/projects/DailyPulse",
+  "repo_name": "DailyPulse",
+  "language": "kotlin",
+  "scanned_at": "2026-03-30T00:36:25.626223",
+  "total_findings": 0,
+  "critical": 0,
+  "high": 0,
+  "medium": 0,
+  "low": 0,
+  "ai_summary": "No issues found in the repository.",
+  "findings": []
+}

@@ -1,0 +1,284 @@
+{
+  "repo_path": "C:/Users/dicky/projects/spring-petclinic",
+  "repo_name": "spring-petclinic",
+  "language": "java",
+  "scanned_at": "2026-03-29T23:31:33.831522",
+  "total_findings": 30,
+  "critical": 0,
+  "high": 8,
+  "medium": 15,
+  "low": 7,
+  "ai_summary": "## Executive Summary - Spring PetClinic Security & Performance Issues\n\n**Critical Priority (HIGH):**\nThe application suffers from severe performance anti-patterns with **FetchType.EAGER** on collections in Owner and Pet entities, causing N+1 query problems and excessive database loads. Missing database indexes on foreign key columns will significantly impact query performance at scale.\n\n**Security Concerns (MEDIUM):**\nMultiple **unprotected mutating endpoints** in OwnerController lack Spring Security authorization annotations (@PreAuthorize, @Secured, or method-level security). This exposes data modification operations to unauthorized access - a critical security vulnerability.\n\n**Data Integrity Issues:**\nJPA relationship mappings are problematic with @OneToMany lacking proper mappedBy configuration, creating potential orphaned records. The combination of @NotNull validation annotations without corresponding @Column(nullable=false) creates inconsistent validation between application and database layers.\n\n**Immediate Actions Required:**\n1. **Replace EAGER with LAZY fetching** and implement explicit JOIN FETCH queries where needed\n2. **Add @PreAuthorize or role-based security** to all mutating endpoints\n3. **Create database indexes** on foreign key columns for performance\n4. **Fix JPA bidirectional mappings** using proper mappedBy attributes\n5. **Align validation constraints** between JPA annotations and database schema\n\n**Spring Boot Best Practice:** Leverage Spring Boot's auto-configuration for JPA repositories, implement Spring Security method-level security, and use Spring Boot Actuator for monitoring query performance. Consider implementing Spring Data JPA's @EntityGraph for optimized fetching strategies.\n\nThese issues collectively pose significant security risks and performance bottlenecks that require immediate remediation.",
+  "findings": [
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 64,
+      "severity": "high",
+      "category": "performance",
+      "title": "FetchType.EAGER on collection relationship",
+      "description": "EAGER fetching on collections always loads all related entities even when not needed, causing serious performance issues at scale.",
+      "suggested_fix": "Use FetchType.LAZY (default for collections) and load with JOIN FETCH in specific queries when needed."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 65,
+      "severity": "high",
+      "category": "jpa",
+      "title": "Foreign key column without database index",
+      "description": "Foreign key columns used in JOIN queries are not automatically indexed by JPA. Without an index, queries slow down dramatically as data grows.",
+      "suggested_fix": "Add @Index to the @Table annotation: @Table(indexes = @Index(columnList = \"column_name\"))"
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Pet.java",
+      "line": 56,
+      "severity": "high",
+      "category": "performance",
+      "title": "FetchType.EAGER on collection relationship",
+      "description": "EAGER fetching on collections always loads all related entities even when not needed, causing serious performance issues at scale.",
+      "suggested_fix": "Use FetchType.LAZY (default for collections) and load with JOIN FETCH in specific queries when needed."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Pet.java",
+      "line": 53,
+      "severity": "high",
+      "category": "jpa",
+      "title": "Foreign key column without database index",
+      "description": "Foreign key columns used in JOIN queries are not automatically indexed by JPA. Without an index, queries slow down dramatically as data grows.",
+      "suggested_fix": "Add @Index to the @Table annotation: @Table(indexes = @Index(columnList = \"column_name\"))"
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Pet.java",
+      "line": 57,
+      "severity": "high",
+      "category": "jpa",
+      "title": "Foreign key column without database index",
+      "description": "Foreign key columns used in JOIN queries are not automatically indexed by JPA. Without an index, queries slow down dramatically as data grows.",
+      "suggested_fix": "Add @Index to the @Table annotation: @Table(indexes = @Index(columnList = \"column_name\"))"
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\vet\\Vet.java",
+      "line": 47,
+      "severity": "high",
+      "category": "performance",
+      "title": "FetchType.EAGER on collection relationship",
+      "description": "EAGER fetching on collections always loads all related entities even when not needed, causing serious performance issues at scale.",
+      "suggested_fix": "Use FetchType.LAZY (default for collections) and load with JOIN FETCH in specific queries when needed."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\vet\\Vet.java",
+      "line": 48,
+      "severity": "high",
+      "category": "jpa",
+      "title": "Foreign key column without database index",
+      "description": "Foreign key columns used in JOIN queries are not automatically indexed by JPA. Without an index, queries slow down dramatically as data grows.",
+      "suggested_fix": "Add @Index to the @Table annotation: @Table(indexes = @Index(columnList = \"column_name\"))"
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\vet\\Vet.java",
+      "line": 49,
+      "severity": "high",
+      "category": "jpa",
+      "title": "Foreign key column without database index",
+      "description": "Foreign key columns used in JOIN queries are not automatically indexed by JPA. Without an index, queries slow down dramatically as data grows.",
+      "suggested_fix": "Add @Index to the @Table annotation: @Table(indexes = @Index(columnList = \"column_name\"))"
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 126,
+      "severity": "medium",
+      "category": "bug",
+      "title": "Returning null from method",
+      "description": "Returning null forces callers to do null checks and risks NullPointerException.",
+      "suggested_fix": "Return Optional<T>, empty collection, or throw a specific exception instead."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 144,
+      "severity": "medium",
+      "category": "bug",
+      "title": "Returning null from method",
+      "description": "Returning null forces callers to do null checks and risks NullPointerException.",
+      "suggested_fix": "Return Optional<T>, empty collection, or throw a specific exception instead."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 64,
+      "severity": "medium",
+      "category": "jpa",
+      "title": "@OneToMany without mappedBy (owning side issue)",
+      "description": "Without mappedBy, Hibernate creates an unnecessary join table instead of using the foreign key in the child table.",
+      "suggested_fix": "Add mappedBy: @OneToMany(mappedBy = \"parentField\") to point to the @ManyToOne field in the child entity."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\OwnerController.java",
+      "line": 77,
+      "severity": "medium",
+      "category": "security",
+      "title": "Mutating endpoint without authorization annotation",
+      "description": "POST/PUT/DELETE endpoints without @PreAuthorize or @Secured may be accessible to unauthenticated users if security config is not perfectly configured.",
+      "suggested_fix": "Add @PreAuthorize(\"isAuthenticated()\") or role-based @PreAuthorize(\"hasRole('ADMIN')\") to sensitive endpoints."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\OwnerController.java",
+      "line": 141,
+      "severity": "medium",
+      "category": "security",
+      "title": "Mutating endpoint without authorization annotation",
+      "description": "POST/PUT/DELETE endpoints without @PreAuthorize or @Secured may be accessible to unauthenticated users if security config is not perfectly configured.",
+      "suggested_fix": "Add @PreAuthorize(\"isAuthenticated()\") or role-based @PreAuthorize(\"hasRole('ADMIN')\") to sensitive endpoints."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Pet.java",
+      "line": 44,
+      "severity": "medium",
+      "category": "jpa",
+      "title": "JPA Entity missing equals() and hashCode()",
+      "description": "Without proper equals/hashCode, entities behave incorrectly in Sets, Maps, and when comparing detached entities.",
+      "suggested_fix": "Override equals() and hashCode() based on the business key (natural ID), not the generated primary key. Or use Lombok @EqualsAndHashCode(of = \"naturalId\")."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Pet.java",
+      "line": 56,
+      "severity": "medium",
+      "category": "jpa",
+      "title": "@OneToMany without mappedBy (owning side issue)",
+      "description": "Without mappedBy, Hibernate creates an unnecessary join table instead of using the foreign key in the child table.",
+      "suggested_fix": "Add mappedBy: @OneToMany(mappedBy = \"parentField\") to point to the @ManyToOne field in the child entity."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\PetController.java",
+      "line": 47,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "@RequestMapping without HTTP method specification",
+      "description": "@RequestMapping without method= accepts ALL HTTP methods. This can expose unintended operations.",
+      "suggested_fix": "Use specific annotations: @GetMapping, @PostMapping, @PutMapping, @DeleteMapping, @PatchMapping."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\PetController.java",
+      "line": 105,
+      "severity": "medium",
+      "category": "security",
+      "title": "Mutating endpoint without authorization annotation",
+      "description": "POST/PUT/DELETE endpoints without @PreAuthorize or @Secured may be accessible to unauthenticated users if security config is not perfectly configured.",
+      "suggested_fix": "Add @PreAuthorize(\"isAuthenticated()\") or role-based @PreAuthorize(\"hasRole('ADMIN')\") to sensitive endpoints."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\PetController.java",
+      "line": 133,
+      "severity": "medium",
+      "category": "security",
+      "title": "Mutating endpoint without authorization annotation",
+      "description": "POST/PUT/DELETE endpoints without @PreAuthorize or @Secured may be accessible to unauthenticated users if security config is not perfectly configured.",
+      "suggested_fix": "Add @PreAuthorize(\"isAuthenticated()\") or role-based @PreAuthorize(\"hasRole('ADMIN')\") to sensitive endpoints."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\PetType.java",
+      "line": 26,
+      "severity": "medium",
+      "category": "jpa",
+      "title": "JPA Entity missing equals() and hashCode()",
+      "description": "Without proper equals/hashCode, entities behave incorrectly in Sets, Maps, and when comparing detached entities.",
+      "suggested_fix": "Override equals() and hashCode() based on the business key (natural ID), not the generated primary key. Or use Lombok @EqualsAndHashCode(of = \"naturalId\")."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Visit.java",
+      "line": 34,
+      "severity": "medium",
+      "category": "jpa",
+      "title": "JPA Entity missing equals() and hashCode()",
+      "description": "Without proper equals/hashCode, entities behave incorrectly in Sets, Maps, and when comparing detached entities.",
+      "suggested_fix": "Override equals() and hashCode() based on the business key (natural ID), not the generated primary key. Or use Lombok @EqualsAndHashCode(of = \"naturalId\")."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\VisitController.java",
+      "line": 91,
+      "severity": "medium",
+      "category": "security",
+      "title": "Mutating endpoint without authorization annotation",
+      "description": "POST/PUT/DELETE endpoints without @PreAuthorize or @Secured may be accessible to unauthenticated users if security config is not perfectly configured.",
+      "suggested_fix": "Add @PreAuthorize(\"isAuthenticated()\") or role-based @PreAuthorize(\"hasRole('ADMIN')\") to sensitive endpoints."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\vet\\Specialty.java",
+      "line": 28,
+      "severity": "medium",
+      "category": "jpa",
+      "title": "JPA Entity missing equals() and hashCode()",
+      "description": "Without proper equals/hashCode, entities behave incorrectly in Sets, Maps, and when comparing detached entities.",
+      "suggested_fix": "Override equals() and hashCode() based on the business key (natural ID), not the generated primary key. Or use Lombok @EqualsAndHashCode(of = \"naturalId\")."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\vet\\Vet.java",
+      "line": 43,
+      "severity": "medium",
+      "category": "jpa",
+      "title": "JPA Entity missing equals() and hashCode()",
+      "description": "Without proper equals/hashCode, entities behave incorrectly in Sets, Maps, and when comparing detached entities.",
+      "suggested_fix": "Override equals() and hashCode() based on the business key (natural ID), not the generated primary key. Or use Lombok @EqualsAndHashCode(of = \"naturalId\")."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\model\\NamedEntity.java",
+      "line": 34,
+      "severity": "low",
+      "category": "jpa",
+      "title": "@NotNull without @Column(nullable=false)",
+      "description": "@NotNull only validates at application level. Without @Column(nullable=false), the database column allows NULLs.",
+      "suggested_fix": "Add @Column(nullable=false) to enforce constraint at DB level too."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\model\\Person.java",
+      "line": 31,
+      "severity": "low",
+      "category": "jpa",
+      "title": "@NotNull without @Column(nullable=false)",
+      "description": "@NotNull only validates at application level. Without @Column(nullable=false), the database column allows NULLs.",
+      "suggested_fix": "Add @Column(nullable=false) to enforce constraint at DB level too."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\model\\Person.java",
+      "line": 35,
+      "severity": "low",
+      "category": "jpa",
+      "title": "@NotNull without @Column(nullable=false)",
+      "description": "@NotNull only validates at application level. Without @Column(nullable=false), the database column allows NULLs.",
+      "suggested_fix": "Add @Column(nullable=false) to enforce constraint at DB level too."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 52,
+      "severity": "low",
+      "category": "jpa",
+      "title": "@NotNull without @Column(nullable=false)",
+      "description": "@NotNull only validates at application level. Without @Column(nullable=false), the database column allows NULLs.",
+      "suggested_fix": "Add @Column(nullable=false) to enforce constraint at DB level too."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 56,
+      "severity": "low",
+      "category": "jpa",
+      "title": "@NotNull without @Column(nullable=false)",
+      "description": "@NotNull only validates at application level. Without @Column(nullable=false), the database column allows NULLs.",
+      "suggested_fix": "Add @Column(nullable=false) to enforce constraint at DB level too."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Owner.java",
+      "line": 60,
+      "severity": "low",
+      "category": "jpa",
+      "title": "@NotNull without @Column(nullable=false)",
+      "description": "@NotNull only validates at application level. Without @Column(nullable=false), the database column allows NULLs.",
+      "suggested_fix": "Add @Column(nullable=false) to enforce constraint at DB level too."
+    },
+    {
+      "file": "src\\main\\java\\org\\springframework\\samples\\petclinic\\owner\\Visit.java",
+      "line": 42,
+      "severity": "low",
+      "category": "jpa",
+      "title": "@NotNull without @Column(nullable=false)",
+      "description": "@NotNull only validates at application level. Without @Column(nullable=false), the database column allows NULLs.",
+      "suggested_fix": "Add @Column(nullable=false) to enforce constraint at DB level too."
+    }
+  ]
+}

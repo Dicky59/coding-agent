@@ -21,6 +21,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from pydantic import BaseModel
+from reporter import generate_report, ReportConfig
 
 
 # ─── Data models ─────────────────────────────────────────────────────────────
@@ -267,13 +268,21 @@ async def scan_repo(repo_path: str, output_file: str | None = None) -> JavaRepor
     report = build_report(repo_path, findings, files_scanned, ai_summary)
     print_report(report)
 
-    if output_file:
-        out_path = Path(output_file)
-        out_path.write_text(
-            json.dumps(report.model_dump(), indent=2, default=str),
-            encoding="utf-8",
-        )
-        print(f"\n💾 Report saved to: {output_file}")
+    config = ReportConfig(
+        repo_path=repo_path,
+        repo_name=Path(repo_path).name,
+        language="java",
+        output_dir="reports",
+        #github_owner="Dicky59",
+        #github_repo="daily-pulse",
+        create_github_issues=False,
+        send_slack=False,
+    )
+    await generate_report(
+        [f.model_dump() for f in report.findings],
+        config,
+        report.ai_summary,
+    )
 
     return report
 
