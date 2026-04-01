@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Review Report — next-dicky</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-bottom: 1px solid #334155;
+    padding: 32px 40px;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .repo-name { font-size: 28px; font-weight: 700; color: #f1f5f9; }
+  .repo-meta { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .scan-time { font-size: 12px; color: #475569; text-align: right; }
+  .lang-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    background: #1e40af; color: #bfdbfe; font-size: 12px; font-weight: 600;
+    margin-top: 8px;
+  }
+
+  .summary-cards {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    padding: 24px 40px;
+    background: #0f1117;
+  }
+  .card {
+    background: #1e293b; border-radius: 12px; padding: 20px 24px;
+    border: 1px solid #334155; text-align: center;
+    transition: transform 0.2s;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card-count { font-size: 36px; font-weight: 700; }
+  .card-label { font-size: 12px; color: #94a3b8; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card.critical .card-count { color: #ef4444; }
+  .card.high .card-count { color: #f97316; }
+  .card.medium .card-count { color: #eab308; }
+  .card.low .card-count { color: #22c55e; }
+
+  .main { padding: 24px 40px; }
+
+  .ai-summary {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 24px; margin-bottom: 24px;
+    border-left: 4px solid #6366f1;
+  }
+  .ai-summary h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #a5b4fc; }
+  .ai-content { font-size: 14px; line-height: 1.7; color: #cbd5e1; }
+
+  .controls {
+    display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-btn {
+    padding: 7px 16px; border-radius: 8px; border: 1px solid #334155;
+    background: #1e293b; color: #94a3b8; font-size: 13px; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: all 0.15s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: #6366f1; color: #fff; border-color: #6366f1;
+  }
+  .search-box {
+    padding: 7px 14px; border-radius: 8px; border: 1px solid #334155;
+    background: #1e293b; color: #e2e8f0; font-size: 13px;
+    font-family: 'Inter', sans-serif; outline: none; min-width: 220px;
+    margin-left: auto;
+  }
+  .search-box:focus { border-color: #6366f1; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 12px 16px; text-align: left; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;
+    background: #1e293b; border-bottom: 1px solid #334155;
+  }
+  .finding-row td {
+    padding: 14px 16px; border-bottom: 1px solid #1e293b;
+    vertical-align: top; font-size: 14px;
+  }
+  .finding-row:hover td { background: #1e293b; }
+  .finding-row.hidden { display: none; }
+
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+  }
+  .badge.critical { background: #450a0a; color: #fca5a5; }
+  .badge.high { background: #431407; color: #fdba74; }
+  .badge.medium { background: #422006; color: #fde68a; }
+  .badge.low { background: #052e16; color: #86efac; }
+
+  .finding-title { font-weight: 500; color: #e2e8f0; }
+  .finding-detail { margin-top: 10px; padding: 12px; background: #0f172a; border-radius: 8px; }
+  .desc { color: #94a3b8; font-size: 13px; line-height: 1.6; margin-bottom: 8px; }
+  .fix { color: #86efac; font-size: 13px; line-height: 1.6; }
+  .file-cell code {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: #7dd3fc; background: #0f172a; padding: 2px 6px; border-radius: 4px;
+  }
+
+  .expand-btn {
+    padding: 4px 10px; border-radius: 6px; border: 1px solid #334155;
+    background: transparent; color: #64748b; font-size: 12px; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: all 0.15s; white-space: nowrap;
+  }
+  .expand-btn:hover { border-color: #6366f1; color: #a5b4fc; }
+  .expand-btn.open { color: #6366f1; border-color: #6366f1; }
+
+  .table-container {
+    background: #1a2234; border: 1px solid #334155; border-radius: 12px; overflow: hidden;
+  }
+
+  .footer {
+    text-align: center; padding: 24px; color: #475569; font-size: 12px;
+    border-top: 1px solid #1e293b; margin-top: 40px;
+  }
+
+  .export-btn {
+    padding: 7px 16px; border-radius: 8px; border: 1px solid #334155;
+    background: #1e293b; color: #94a3b8; font-size: 13px; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: all 0.15s;
+  }
+  .export-btn:hover { background: #0f172a; color: #e2e8f0; }
+
+  .no-findings {
+    text-align: center; padding: 60px; color: #475569; font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="repo-name">💛 next-dicky</div>
+      <div class="repo-meta">C:/Users/dicky/projects/next-dicky</div>
+      <div class="lang-badge">JAVASCRIPT</div>
+    </div>
+    <div class="scan-time">
+      🕐 Scanned: 2026-04-01 16:23<br>
+      🤖 AI Coding Agent
+    </div>
+  </div>
+</div>
+
+<div class="summary-cards">
+  <div class="card critical">
+    <div class="card-count">0</div>
+    <div class="card-label">🔴 Critical</div>
+  </div>
+  <div class="card high">
+    <div class="card-count">16</div>
+    <div class="card-label">🟠 High</div>
+  </div>
+  <div class="card medium">
+    <div class="card-count">9</div>
+    <div class="card-label">🟡 Medium</div>
+  </div>
+  <div class="card low">
+    <div class="card-count">15</div>
+    <div class="card-label">🟢 Low</div>
+  </div>
+</div>
+
+<div class="main">
+  
+        <div class="ai-summary">
+            <h2>🧠 AI Analysis</h2>
+            <div class="ai-content">## Executive Summary - Critical Issues<br><br>**🚨 Immediate Security Risks:**<br>Your API routes have **zero authentication**, allowing unauthorized access to mutating operations. This is a critical vulnerability that could lead to data breaches or manipulation.<br><br>**🔐 Cryptographic Weakness:**<br>Multiple instances of `Math.random()` are used for security-sensitive operations. This is cryptographically insecure - replace with `crypto.randomBytes()` or `crypto.randomUUID()` immediately.<br><br>**⚠️ Data Integrity Issues:**<br>- API routes accept request bodies without validation/sanitization, creating injection attack vectors<br>- All Supabase queries lack error handling, potentially exposing sensitive database errors to clients<br><br>**🧹 Code Quality Problems:**<br>15 console statements left in production code will clutter logs and may leak sensitive information.<br><br>**Priority Actions:**<br>1. **Implement authentication middleware** for all mutating API routes<br>2. **Replace Math.random()** with secure alternatives<br>3. **Add input validation** using libraries like Joi or Zod<br>4. **Wrap Supabase queries** in try-catch blocks with proper error responses<br>5. **Remove console statements** or replace with proper logging<br><br>**Next.js Best Practices:**<br>Consider using Next.js middleware for authentication and request validation to centralize security concerns. The current route.js appears to handle multiple endpoints - consider splitting into focused route handlers for better maintainability.<br><br>**Risk Level: CRITICAL** - Deploy fixes before production use.</div>
+        </div>
+
+  <div class="controls">
+    <button class="filter-btn active" onclick="filterSeverity('all', this)">All (40)</button>
+    <button class="filter-btn" onclick="filterSeverity('critical', this)">Critical (0)</button>
+    <button class="filter-btn" onclick="filterSeverity('high', this)">High (16)</button>
+    <button class="filter-btn" onclick="filterSeverity('medium', this)">Medium (9)</button>
+    <button class="filter-btn" onclick="filterSeverity('low', this)">Low (15)</button>
+    <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
+    <input class="search-box" type="text" placeholder="🔍 Search findings..." oninput="searchFindings(this.value)">
+  </div>
+
+  <div class="table-container">
+    <table><thead><tr><th>Severity</th><th>Category</th><th>Finding</th><th>File</th><th></th></tr></thead><tbody>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Mutating API route without authentication check</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">POST/PUT/DELETE routes without authentication allow anyone to modify data.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add authentication check at the start of the handler. Verify session or API key before processing the request.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:5</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">API route reading request body without validation</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Accepting request body without validation allows malformed or malicious data to reach your business logic.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:8</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Mutating API route without authentication check</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">POST/PUT/DELETE routes without authentication allow anyone to modify data.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add authentication check at the start of the handler. Verify session or API key before processing the request.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:43</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="security">
+            <td><span class="badge high">HIGH</span></td>
+            <td>🔒 security</td>
+            <td class="title-cell">
+                <div class="finding-title">Math.random() used for security-sensitive value</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Math.random() is not cryptographically secure and can be predicted.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:34</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="security">
+            <td><span class="badge high">HIGH</span></td>
+            <td>🔒 security</td>
+            <td class="title-cell">
+                <div class="finding-title">Math.random() used for security-sensitive value</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Math.random() is not cryptographically secure and can be predicted.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:35</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Mutating API route without authentication check</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">POST/PUT/DELETE routes without authentication allow anyone to modify data.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add authentication check at the start of the handler. Verify session or API key before processing the request.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:26</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">API route reading request body without validation</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Accepting request body without validation allows malformed or malicious data to reach your business logic.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:28</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Mutating API route without authentication check</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">POST/PUT/DELETE routes without authentication allow anyone to modify data.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add authentication check at the start of the handler. Verify session or API key before processing the request.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:57</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">API route reading request body without validation</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Accepting request body without validation allows malformed or malicious data to reach your business logic.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:59</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Mutating API route without authentication check</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">POST/PUT/DELETE routes without authentication allow anyone to modify data.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add authentication check at the start of the handler. Verify session or API key before processing the request.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:4</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="nextjs">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">API route reading request body without validation</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Accepting request body without validation allows malformed or malicious data to reach your business logic.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:6</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="hooks">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 hooks</td>
+            <td class="title-cell">
+                <div class="finding-title">useEffect missing dependency array</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">useEffect without a dependency array runs after every render, causing infinite loops if state is updated.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add a dependency array: useEffect(() => {...}, [dep1, dep2]). Use [] for mount-only effects.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>page.js:58</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="hooks">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 hooks</td>
+            <td class="title-cell">
+                <div class="finding-title">useEffect missing dependency array</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">useEffect without a dependency array runs after every render, causing infinite loops if state is updated.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add a dependency array: useEffect(() => {...}, [dep1, dep2]). Use [] for mount-only effects.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>ApiKeyForm.js:19</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="hooks">
+            <td><span class="badge high">HIGH</span></td>
+            <td>📌 hooks</td>
+            <td class="title-cell">
+                <div class="finding-title">useEffect missing dependency array</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">useEffect without a dependency array runs after every render, causing infinite loops if state is updated.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Add a dependency array: useEffect(() => {...}, [dep1, dep2]). Use [] for mount-only effects.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>Notification.js:14</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="security">
+            <td><span class="badge high">HIGH</span></td>
+            <td>🔒 security</td>
+            <td class="title-cell">
+                <div class="finding-title">Math.random() used for security-sensitive value</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Math.random() is not cryptographically secure and can be predicted.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>apiKeyGenerator.js:3</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="high" data-category="security">
+            <td><span class="badge high">HIGH</span></td>
+            <td>🔒 security</td>
+            <td class="title-cell">
+                <div class="finding-title">Math.random() used for security-sensitive value</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Math.random() is not cryptographically secure and can be predicted.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>apiKeyGenerator.js:4</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:22</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:47</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:19</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:43</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:72</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:86</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:17</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="nextjs">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>📌 nextjs</td>
+            <td class="title-cell">
+                <div class="finding-title">Supabase query without error handling</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:31</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="medium" data-category="pattern">
+            <td><span class="badge medium">MEDIUM</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">Array index used as key prop</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Using array index as key causes incorrect component reuse when items are reordered, added, or removed.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Use a stable unique identifier: key={item.id}</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>Sidebar.js:162</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:13</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:17</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:20</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:53</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:59</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:46</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:122</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>route.js:49</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>page.js:50</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>useApiKeys.js:19</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>useApiKeys.js:34</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>useApiKeys.js:48</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>useApiKeys.js:62</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>chain.js:53</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr>
+        <tr class="finding-row" data-severity="low" data-category="pattern">
+            <td><span class="badge low">LOW</span></td>
+            <td>🏗️ pattern</td>
+            <td class="title-cell">
+                <div class="finding-title">console.log/warn/error left in production code</div>
+                <div class="finding-detail" style="display:none">
+                    <p class="desc">Console statements left in production code leak implementation details and impact performance.</p>
+                    <p class="fix">✅ <strong>Fix:</strong> Remove debug logs before committing. Use a proper logger with log levels for production logging.</p>
+                </div>
+            </td>
+            <td class="file-cell"><code>clipboard.js:6</code></td>
+            <td><button class="expand-btn" onclick="toggleDetail(this)">▼ Details</button></td>
+        </tr></tbody></table>
+  </div>
+</div>
+
+<div class="footer">
+  Generated by <strong>AI Coding Agent</strong> · 2026-04-01 16:23 ·
+  40 findings in next-dicky
+</div>
+
+<script>
+function toggleDetail(btn) {
+  const row = btn.closest('tr');
+  const detail = row.querySelector('.finding-detail');
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '▼ Details' : '▲ Hide';
+  btn.classList.toggle('open', !isOpen);
+}
+
+function filterSeverity(severity, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.finding-row').forEach(row => {
+    if (severity === 'all' || row.dataset.severity === severity) {
+      row.classList.remove('hidden');
+    } else {
+      row.classList.add('hidden');
+    }
+  });
+}
+
+function searchFindings(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.finding-row').forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.classList.toggle('hidden', q.length > 0 && !text.includes(q));
+  });
+}
+
+function exportCSV() {
+  const rows = [['Severity','Category','Title','File','Line','Description','Fix']];
+  document.querySelectorAll('.finding-row').forEach(row => {
+    const cells = row.querySelectorAll('td');
+    const sev = cells[0].textContent.trim();
+    const cat = cells[1].textContent.trim();
+    const title = row.querySelector('.finding-title').textContent.trim();
+    const file = cells[3].textContent.trim();
+    const desc = row.querySelector('.desc') ? row.querySelector('.desc').textContent.trim() : '';
+    const fix = row.querySelector('.fix') ? row.querySelector('.fix').textContent.trim() : '';
+    const line = file.includes(':') ? file.split(':')[1] : '';
+    rows.push([sev, cat, title, file, line, desc, fix]);
+  });
+  const csv = rows.map(r => r.map(c => '"' + c.replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'next-dicky_findings.csv';
+  a.click();
+}
+</script>
+</body>
+</html>

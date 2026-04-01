@@ -1,0 +1,374 @@
+{
+  "repo_path": "C:/Users/dicky/projects/next-dicky",
+  "repo_name": "next-dicky",
+  "language": "javascript",
+  "scanned_at": "2026-04-01T16:23:37.312769",
+  "total_findings": 40,
+  "critical": 0,
+  "high": 16,
+  "medium": 9,
+  "low": 15,
+  "ai_summary": "## Executive Summary - Critical Issues\n\n**\ud83d\udea8 Immediate Security Risks:**\nYour API routes have **zero authentication**, allowing unauthorized access to mutating operations. This is a critical vulnerability that could lead to data breaches or manipulation.\n\n**\ud83d\udd10 Cryptographic Weakness:**\nMultiple instances of `Math.random()` are used for security-sensitive operations. This is cryptographically insecure - replace with `crypto.randomBytes()` or `crypto.randomUUID()` immediately.\n\n**\u26a0\ufe0f Data Integrity Issues:**\n- API routes accept request bodies without validation/sanitization, creating injection attack vectors\n- All Supabase queries lack error handling, potentially exposing sensitive database errors to clients\n\n**\ud83e\uddf9 Code Quality Problems:**\n15 console statements left in production code will clutter logs and may leak sensitive information.\n\n**Priority Actions:**\n1. **Implement authentication middleware** for all mutating API routes\n2. **Replace Math.random()** with secure alternatives\n3. **Add input validation** using libraries like Joi or Zod\n4. **Wrap Supabase queries** in try-catch blocks with proper error responses\n5. **Remove console statements** or replace with proper logging\n\n**Next.js Best Practices:**\nConsider using Next.js middleware for authentication and request validation to centralize security concerns. The current route.js appears to handle multiple endpoints - consider splitting into focused route handlers for better maintainability.\n\n**Risk Level: CRITICAL** - Deploy fixes before production use.",
+  "findings": [
+    {
+      "file": "src/app/api/api-keys/[id]/route.js",
+      "line": 5,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "Mutating API route without authentication check",
+      "description": "POST/PUT/DELETE routes without authentication allow anyone to modify data.",
+      "suggested_fix": "Add authentication check at the start of the handler. Verify session or API key before processing the request."
+    },
+    {
+      "file": "src/app/api/api-keys/[id]/route.js",
+      "line": 8,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "API route reading request body without validation",
+      "description": "Accepting request body without validation allows malformed or malicious data to reach your business logic.",
+      "suggested_fix": "Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input."
+    },
+    {
+      "file": "src/app/api/api-keys/[id]/route.js",
+      "line": 43,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "Mutating API route without authentication check",
+      "description": "POST/PUT/DELETE routes without authentication allow anyone to modify data.",
+      "suggested_fix": "Add authentication check at the start of the handler. Verify session or API key before processing the request."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 34,
+      "severity": "high",
+      "category": "security",
+      "title": "Math.random() used for security-sensitive value",
+      "description": "Math.random() is not cryptographically secure and can be predicted.",
+      "suggested_fix": "Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 35,
+      "severity": "high",
+      "category": "security",
+      "title": "Math.random() used for security-sensitive value",
+      "description": "Math.random() is not cryptographically secure and can be predicted.",
+      "suggested_fix": "Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 26,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "Mutating API route without authentication check",
+      "description": "POST/PUT/DELETE routes without authentication allow anyone to modify data.",
+      "suggested_fix": "Add authentication check at the start of the handler. Verify session or API key before processing the request."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 28,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "API route reading request body without validation",
+      "description": "Accepting request body without validation allows malformed or malicious data to reach your business logic.",
+      "suggested_fix": "Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input."
+    },
+    {
+      "file": "src/app/api/github-summarizer/route.js",
+      "line": 57,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "Mutating API route without authentication check",
+      "description": "POST/PUT/DELETE routes without authentication allow anyone to modify data.",
+      "suggested_fix": "Add authentication check at the start of the handler. Verify session or API key before processing the request."
+    },
+    {
+      "file": "src/app/api/github-summarizer/route.js",
+      "line": 59,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "API route reading request body without validation",
+      "description": "Accepting request body without validation allows malformed or malicious data to reach your business logic.",
+      "suggested_fix": "Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input."
+    },
+    {
+      "file": "src/app/api/validate-api-key/route.js",
+      "line": 4,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "Mutating API route without authentication check",
+      "description": "POST/PUT/DELETE routes without authentication allow anyone to modify data.",
+      "suggested_fix": "Add authentication check at the start of the handler. Verify session or API key before processing the request."
+    },
+    {
+      "file": "src/app/api/validate-api-key/route.js",
+      "line": 6,
+      "severity": "high",
+      "category": "nextjs",
+      "title": "API route reading request body without validation",
+      "description": "Accepting request body without validation allows malformed or malicious data to reach your business logic.",
+      "suggested_fix": "Validate with Zod: const data = schema.parse(await req.json()). Return 400 for invalid input."
+    },
+    {
+      "file": "src/app/protected/page.js",
+      "line": 58,
+      "severity": "high",
+      "category": "hooks",
+      "title": "useEffect missing dependency array",
+      "description": "useEffect without a dependency array runs after every render, causing infinite loops if state is updated.",
+      "suggested_fix": "Add a dependency array: useEffect(() => {...}, [dep1, dep2]). Use [] for mount-only effects."
+    },
+    {
+      "file": "src/components/dashboard/ApiKeyForm.js",
+      "line": 19,
+      "severity": "high",
+      "category": "hooks",
+      "title": "useEffect missing dependency array",
+      "description": "useEffect without a dependency array runs after every render, causing infinite loops if state is updated.",
+      "suggested_fix": "Add a dependency array: useEffect(() => {...}, [dep1, dep2]). Use [] for mount-only effects."
+    },
+    {
+      "file": "src/components/Notification.js",
+      "line": 14,
+      "severity": "high",
+      "category": "hooks",
+      "title": "useEffect missing dependency array",
+      "description": "useEffect without a dependency array runs after every render, causing infinite loops if state is updated.",
+      "suggested_fix": "Add a dependency array: useEffect(() => {...}, [dep1, dep2]). Use [] for mount-only effects."
+    },
+    {
+      "file": "src/utils/apiKeyGenerator.js",
+      "line": 3,
+      "severity": "high",
+      "category": "security",
+      "title": "Math.random() used for security-sensitive value",
+      "description": "Math.random() is not cryptographically secure and can be predicted.",
+      "suggested_fix": "Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers."
+    },
+    {
+      "file": "src/utils/apiKeyGenerator.js",
+      "line": 4,
+      "severity": "high",
+      "category": "security",
+      "title": "Math.random() used for security-sensitive value",
+      "description": "Math.random() is not cryptographically secure and can be predicted.",
+      "suggested_fix": "Use crypto.randomBytes() in Node.js or crypto.getRandomValues() in browsers."
+    },
+    {
+      "file": "src/app/api/api-keys/[id]/route.js",
+      "line": 22,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 47,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/app/api/check-auth/route.js",
+      "line": 19,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/app/api/github-summarizer/route.js",
+      "line": 43,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/app/api/github-summarizer/route.js",
+      "line": 72,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/app/api/github-summarizer/route.js",
+      "line": 86,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/app/api/validate-api-key/route.js",
+      "line": 17,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/app/api/validate-api-key/route.js",
+      "line": 31,
+      "severity": "medium",
+      "category": "nextjs",
+      "title": "Supabase query without error handling",
+      "description": "Supabase operations return {data, error}. Ignoring the error means failures are silently swallowed.",
+      "suggested_fix": "Always destructure and check: const {data, error} = await supabase.from(...); if (error) throw error;"
+    },
+    {
+      "file": "src/components/dashboard/Sidebar.js",
+      "line": 162,
+      "severity": "medium",
+      "category": "pattern",
+      "title": "Array index used as key prop",
+      "description": "Using array index as key causes incorrect component reuse when items are reordered, added, or removed.",
+      "suggested_fix": "Use a stable unique identifier: key={item.id}"
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 13,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 17,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 20,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 53,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/api/api-keys/route.js",
+      "line": 59,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/api/check-auth/route.js",
+      "line": 46,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/api/github-summarizer/route.js",
+      "line": 122,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/api/validate-api-key/route.js",
+      "line": 49,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/app/protected/page.js",
+      "line": 50,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/hooks/useApiKeys.js",
+      "line": 19,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/hooks/useApiKeys.js",
+      "line": 34,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/hooks/useApiKeys.js",
+      "line": 48,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/hooks/useApiKeys.js",
+      "line": 62,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/lib/chain.js",
+      "line": 53,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    },
+    {
+      "file": "src/utils/clipboard.js",
+      "line": 6,
+      "severity": "low",
+      "category": "pattern",
+      "title": "console.log/warn/error left in production code",
+      "description": "Console statements left in production code leak implementation details and impact performance.",
+      "suggested_fix": "Remove debug logs before committing. Use a proper logger with log levels for production logging."
+    }
+  ]
+}
