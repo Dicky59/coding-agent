@@ -14,7 +14,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-[#0f1117] text-slate-200 antialiased">
-        {/* Top nav */}
         <header className="border-b border-slate-700 bg-[#0f1117] sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -27,19 +26,15 @@ export default function RootLayout({
               </div>
             </a>
 
-            {/* Nav links */}
             <nav className="flex items-center gap-6">
-              <a
-                href="/"
-                className="text-sm text-slate-400 hover:text-white transition-colors"
-              >
+              <a href="/" className="text-sm text-slate-400 hover:text-white transition-colors">
                 Reports
               </a>
-              <a
-                href="/trends"
-                className="text-sm text-slate-400 hover:text-white transition-colors"
-              >
+              <a href="/trends" className="text-sm text-slate-400 hover:text-white transition-colors">
                 📈 Trends
+              </a>
+              <a href="/settings" className="text-sm text-slate-400 hover:text-white transition-colors">
+                ⚙️ Settings
               </a>
               <a
                 href="https://github.com/Dicky59/coding-agent"
