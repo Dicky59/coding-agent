@@ -2,7 +2,7 @@
 
 An AI-powered code review platform that automatically scans, analyzes, and fixes issues across multiple programming languages. Built with Claude, LangGraph, MCP, and Next.js.
 
-**Live Dashboard:** [ai-coding-agent-five.vercel.app/](https://ai-coding-agent-five.vercel.app/) _(replace with your actual URL)_
+**Live Dashboard:** [ai-coding-agent-five.vercel.app/](https://ai-coding-agent-five.vercel.app/)
 
 ---
 
